@@ -441,10 +441,66 @@ class MaskAgreementAdapter:
         return ToolResult(output={"iou": evidence.value}, evidence=evidence)
 
 
+class SingleImageVqaAdapter:
+    """Bounded adapter from the registered VQA tool to SingleImageVqaService.
+
+    The natural-language question travels via ``context.metadata["query"]``
+    (persisted job metadata), never as a free-form plan parameter. The
+    observation is loaded through the controlled repository/store logic inside
+    ``SingleImageVqaService``.
+    """
+
+    def __init__(
+        self,
+        registration: ToolRegistration,
+        artifact_store: ArtifactStore | None,
+        vqa_service: Any | None = None,
+    ) -> None:
+        self.registration = registration
+        self.artifact_store = artifact_store
+        self._vqa_service = vqa_service
+        del artifact_store
+
+    def execute(self, call: ToolCall, context: ExecutionContext) -> ToolResult:
+        observation_id = call.input_bindings.get("observation")
+        if not observation_id or not isinstance(observation_id, str):
+            raise AdapterInputError("single-image VQA requires an observation input")
+        query = context.metadata.get("query")
+        if not isinstance(query, str) or not query.strip():
+            raise AdapterInputError("single-image VQA requires a question in job metadata")
+        service = self._vqa_service
+        if service is None:
+            service = _lazy_vqa_service(context)
+        evidence = service.answer(observation_id, query)
+        return ToolResult(
+            output={"answer": evidence.prediction.answer, "evidence_id": evidence.evidence_id},
+            evidence=evidence,
+        )
+
+
+def _lazy_vqa_service(context: ExecutionContext) -> Any:
+    """Build a controlled VQA service from the repository data root.
+
+    Production wires the application-level service explicitly so the frozen
+    checkpoint is loaded once. This fallback preserves controlled
+    repository/store loading when no service was injected (for example in
+    isolated tests) without using arbitrary paths or unsafe globals.
+    """
+
+    if context.repository is None:
+        raise AdapterInputError("single-image VQA requires a metadata repository")
+    from satquery.ingestion import FilesystemObservationStore
+    from satquery.inference.vqa import SingleImageVqaService
+
+    store = FilesystemObservationStore(context.repository.data_root)
+    return SingleImageVqaService(store)
+
+
 _DEFAULT_CONSTRUCTORS: dict[ToolExecutor, AdapterConstructor] = {
     ToolExecutor.SAR_TEMPORAL_CHANGE: SarTemporalChangeAdapter,
     ToolExecutor.MASK_AREA: MaskAreaAdapter,
     ToolExecutor.MASK_AGREEMENT: MaskAgreementAdapter,
+    ToolExecutor.SINGLE_IMAGE_VQA: SingleImageVqaAdapter,
 }
 
 
@@ -453,6 +509,7 @@ def build_registered_adapters(
     *,
     artifact_store: ArtifactStore | None = None,
     constructors: Mapping[ToolExecutor, AdapterConstructor] | None = None,
+    vqa_service: Any | None = None,
 ) -> dict[str, ToolAdapter]:
     """Instantiate one adapter for every registered tool.
 
@@ -461,7 +518,17 @@ def build_registered_adapters(
     YAML is executed dynamically.
     """
 
-    constructor_map = dict(_DEFAULT_CONSTRUCTORS if constructors is None else constructors)
+    if constructors is None and vqa_service is not None:
+        constructor_map: dict[ToolExecutor, AdapterConstructor] = dict(_DEFAULT_CONSTRUCTORS)
+
+        def _vqa_constructor(
+            registration: ToolRegistration, store: ArtifactStore | None
+        ) -> ToolAdapter:
+            return SingleImageVqaAdapter(registration, store, vqa_service=vqa_service)
+
+        constructor_map[ToolExecutor.SINGLE_IMAGE_VQA] = _vqa_constructor
+    else:
+        constructor_map = dict(_DEFAULT_CONSTRUCTORS if constructors is None else constructors)
     required = {registration.executor for registration in registry.tools.values()}
     missing = sorted(executor.value for executor in required if executor not in constructor_map)
     if missing:
@@ -479,5 +546,6 @@ __all__ = [
     "MaskAgreementAdapter",
     "MaskAreaAdapter",
     "SarTemporalChangeAdapter",
+    "SingleImageVqaAdapter",
     "build_registered_adapters",
 ]

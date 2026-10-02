@@ -76,3 +76,23 @@ tools:
     evidence:
       type: measurement
       deterministic: true
+
+  single_image_vqa_v1:
+    title: Frozen single-image visual question answering
+    kind: learned_vqa
+    executor: single_image_vqa
+    implementation: satquery.inference.vqa.SingleImageVqaService
+    description: >-
+      Answers a natural-language question from one registered observation
+      visualization using the frozen registered SmolVLM checkpoint. The
+      natural-language question travels via job metadata, never as a bounded
+      plan parameter. Output is text-only VQA evidence and never creates
+      masks, measurements, or calibrated confidence.
+    inputs:
+      - name: observation
+        kind: observation
+    parameters: {}
+    evidence:
+      type: vqa_evidence
+      deterministic: false
+      requires_verified_common_grid: false

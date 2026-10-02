@@ -39,6 +39,7 @@ _EXECUTOR_IMPLEMENTATIONS: dict[ToolExecutor, str] = {
         "satquery.analytics.reconciliation.diagnostic_mask_agreement"
     ),
     ToolExecutor.MASK_AREA: "satquery.analytics.measurement.measure_mask_area",
+    ToolExecutor.SINGLE_IMAGE_VQA: "satquery.inference.vqa.SingleImageVqaService",
 }
 _UNSAFE_PARAMETER_NAMES = {"command", "code", "url", "path"}
 _PARAMETER_TYPES = {
@@ -302,6 +303,39 @@ def build_runtime_capabilities(
                 if not ready:
                     status = CapabilityState.UNAVAILABLE_RUNTIME
                     reason = "registered executor readiness probe failed"
+                elif model_ids:
+                    # Tool-plus-model capabilities (for example the frozen VQA
+                    # tool wrapping a pinned checkpoint) require both the
+                    # registered tool and the pinned model checkpoint.
+                    missing = [model_id for model_id in model_ids if model_id not in models.models]
+                    if missing:
+                        status = CapabilityState.UNAVAILABLE_MODEL_NOT_INSTALLED
+                        reason = "required model registration is not present"
+                    elif model_root is None or model_readiness_probe is None:
+                        status = CapabilityState.UNAVAILABLE_RUNTIME
+                        reason = "model checkpoint/runtime readiness was not probed"
+                    else:
+                        model_regs = [models.models[model_id] for model_id in model_ids]
+                        if any(getattr(model, "task", None) not in _KNOWN_MODEL_TASKS for model in model_regs):
+                            status = CapabilityState.UNAVAILABLE_RUNTIME
+                            reason = "no known runtime adapter for one or more models"
+                        else:
+                            checkpoint_root = Path(model_root)
+                            checkpoints_present = all(
+                                _checkpoint_present(
+                                    checkpoint_root,
+                                    model_id,
+                                    models.models[model_id],
+                                )
+                                for model_id in model_ids
+                            )
+                            model_ready = checkpoints_present and all(
+                                model_readiness_probe(model_id, models.models[model_id])
+                                for model_id in model_ids
+                            )
+                            if not model_ready:
+                                status = CapabilityState.UNAVAILABLE_RUNTIME
+                                reason = "model checkpoint/runtime readiness probe failed"
         elif model_ids:
             missing = [model_id for model_id in model_ids if model_id not in models.models]
             if missing:
@@ -371,10 +405,20 @@ def _default_readiness_probe(registration: ToolRegistration) -> bool:
     module = importlib.import_module(module_name)
     return callable(getattr(module, attribute))
 
-
 def _checkpoint_present(root: Path, model_id: str, registration: Any) -> bool:
-    checkpoint = root / model_id / registration.checkpoint_file
-    return checkpoint.is_file()
+    direct_checkpoint = root / model_id / registration.checkpoint_file
+    if direct_checkpoint.is_file():
+        return True
+
+    cached_checkpoint = (
+        root
+        / "cache"
+        / ("models--" + registration.model_id.replace("/", "--"))
+        / "snapshots"
+        / registration.revision
+        / registration.checkpoint_file
+    )
+    return cached_checkpoint.is_file()
 
 
 def _validate_capability_document(

@@ -16,7 +16,7 @@
     "method": "sort_scene_sha256_then_7_train_2_validation_3_test",
     "grouped_by_scene": true
   },
-  "created_at": "2026-09-03T16:19:12.279431+00:00",
+  "created_at": "2026-10-01T18:37:04.985577+00:00",
   "scene_assignments": {
     "00edf7a26269ad2a2f9e44c6eb873fec307d6162868a326be2c72b4eda8adf56": "train",
     "1908670f601452dc6169b3987dd8513305c174de970738210b2e6b6a9a7f6a72": "train",

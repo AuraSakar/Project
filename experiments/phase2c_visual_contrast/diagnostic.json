@@ -10,7 +10,7 @@
   },
   "source": {
     "manifest": "experiments/phase2b_smolvlm_rsvqa_lr/split_manifest.json",
-    "manifest_sha256": "deaf8a0f5f2d053ad0803c19fd8524a143599f214fdbf83f9548c69ba0ca34c2"
+    "manifest_sha256": "a5b4c902f6434b91bbdb83f1dbeb5bfcc9103d9f96c25c34214f467c1bfb3a42"
   },
   "samples": {
     "train": 1378,

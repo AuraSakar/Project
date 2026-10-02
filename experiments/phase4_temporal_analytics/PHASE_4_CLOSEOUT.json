@@ -6,13 +6,13 @@
   "git_sha": "660466161cb187208a63111698fd11a14f3412bc",
   "audited_at": "2026-02-14",
   "artifacts": {
-    "experiments/phase4_temporal_analytics/p4_e01/manifest.json": "6a0b0b962272129a58c61bd6c88c2540a6d3f455eb8e6a45d365f06648e41f73",
-    "experiments/phase4_temporal_analytics/model_contracts.yaml": "eca4ac709c455ae4009f70528f7ba560b610eb069e661d379665c6404c062f38",
-    "experiments/phase4_temporal_analytics/dataset_contracts.yaml": "cf68ff68cf16c061578df9064ea8428c20da5b825fc8e9d8ef69a30c25fa5585",
-    "experiments/phase4_temporal_analytics/experiment_plan.yaml": "3966b0a3eb134a6791d4b9ff84f53205490155245116d0319d6a58e50b84562c",
-    "satquery/registry/tools.yaml": "8dc69d3426a7b4cbe15b0e39ae640c608fc240950c811cdaf208836ca61e0b18",
-    "models/registry.yaml": "60daaec39cf53b0faadd983e854c9b2f716f4c3846fb2758f1fc84d99f580113",
-    "satquery/registry/preprocessing.yaml": "4a0f03a9e69bc2170444286cc5f9313878f48da8d149010902bbe54c5fb4e189"
+    "experiments/phase4_temporal_analytics/p4_e01/manifest.json": "a696e5801a18e2be4513debac8ec5d76473e81536a1d5e9a6d765d5792780b96",
+    "experiments/phase4_temporal_analytics/model_contracts.yaml": "0063184b19ba01303c27a5dc04d2c6bf259acb7e1fd66536f7e5fd34fc238859",
+    "experiments/phase4_temporal_analytics/dataset_contracts.yaml": "6f6ea38afa5aa02462b0eb543ab8690c83d3f5ba85def925a6e5b4a14648237a",
+    "experiments/phase4_temporal_analytics/experiment_plan.yaml": "615972170e459488f06d3482605653cb331f580b3e46cf3e632ef55faf5dc947",
+    "satquery/registry/tools.yaml": "c0e7084d49e4b401b9f839a23407e860d8a3a79d0ab26c8de85daf1fbf030ed3",
+    "models/registry.yaml": "9961fd61064cdd2f768fa2f9aaae104156fc1edbb45536e9bbb80bf34b713b41",
+    "satquery/registry/preprocessing.yaml": "8f8b96e8665c727a76e7912a15a9631794253262a670cdcbe8adee523362b4bf"
   },
   "lanes": {
     "p4_e01_lane_a_formulas": {

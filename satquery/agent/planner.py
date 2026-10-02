@@ -129,9 +129,28 @@ def _sar_change_then_area(intent: QueryIntent, inputs: Mapping[str, Any]) -> tup
     )
 
 
+def _single_vqa(intent: QueryIntent, inputs: Mapping[str, Any]) -> tuple[_StepSpec, ...]:
+    observation_ids = _ids(inputs)
+    if len(observation_ids) != 1:
+        raise PlannerError(
+            "MISSING_SINGLE_INPUT",
+            "A single-image VQA plan requires exactly one observation.",
+        )
+    parameters = dict(inputs.get("parameters", {}))
+    return (
+        _StepSpec(
+            tool_id="single_image_vqa_v1",
+            input_bindings={"observation": observation_ids[0]},
+            parameters=parameters,
+            depends_on=(),
+        ),
+    )
+
+
 _POLICIES: dict[tuple[str, str | None, str | None, str | None, bool | None], PolicyFactory] = {
     ("CHANGE_LOCALIZE", "sar", None, None, None): _sar_change,
     ("CHANGE_MEASURE", "sar", "area", None, None): _sar_change_then_area,
+    ("SINGLE_VQA", None, None, None, None): _single_vqa,
 }
 
 

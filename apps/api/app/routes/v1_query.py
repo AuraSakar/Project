@@ -457,7 +457,7 @@ def submit_query_v1(
             "analysis_plan_hash": plan.plan_hash,
             "registry_hash": plan.registry_hash,
         },
-        "metadata": {"verified_common_grid_pairs": verified_pairs},
+        "metadata": {"verified_common_grid_pairs": verified_pairs, "query": payload.query},
     }
     analysis = AnalysisRecord(
         analysis_id=analysis_id,

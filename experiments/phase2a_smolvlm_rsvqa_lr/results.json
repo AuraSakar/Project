@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "run_id": "phase2a_smolvlm_256m_rsvqa_lr_grouped_v1",
-  "created_at": "2026-09-03T16:46:00.101068+00:00",
+  "created_at": "2026-10-01T18:39:15.429664+00:00",
   "model": {
     "registry_id": "smolvlm_256m_instruct_v1",
     "model_id": "HuggingFaceTB/SmolVLM-256M-Instruct",
@@ -29,12 +29,12 @@
   "runtime": {
     "device": "cpu",
     "cpu_threads": 2,
-    "total_seconds": 68.488,
-    "mean_seconds_per_sample": 11.4147,
-    "python": "3.13.9",
-    "platform": "Windows-10-10.0.19045-SP0",
-    "logical_cpus": 4,
-    "torch": "2.13.0+cpu"
+    "total_seconds": 79.589,
+    "mean_seconds_per_sample": 13.2648,
+    "python": "3.12.3",
+    "platform": "Linux-6.14.0-37-generic-x86_64-with-glibc2.39",
+    "logical_cpus": 22,
+    "torch": "2.14.1+cu130"
   },
   "limitations": [
     "Smoke-scale held-out subset; not a publishable benchmark estimate.",

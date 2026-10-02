@@ -197,6 +197,11 @@ class ExecutionEngine:
 
         if self._cache is None or self._tool_registry is None:
             return None
+        # The VQA question travels via job metadata, not via bounded plan
+        # parameters, so the plan alone cannot distinguish two questions on
+        # the same image. Never reuse VQA results across executions.
+        if step.tool_id == "single_image_vqa_v1":
+            return None
         registration = self._tool_registry.get(step.tool_id)
         if registration is None:
             return None

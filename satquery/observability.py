@@ -145,7 +145,7 @@ def _check_models(application: Any) -> dict[str, Any]:
                     root / model_id / registration.checkpoint_file,
                     root
                     / "cache"
-                    / ("models--" + model_id.replace("/", "--"))
+                    / ("models--" + registration.model_id.replace("/", "--"))
                     / "snapshots"
                     / registration.revision
                     / registration.checkpoint_file,

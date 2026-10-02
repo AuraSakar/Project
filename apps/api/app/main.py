@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import time
@@ -97,9 +98,44 @@ def create_app(
     index_existing_observations(store, repository)
     tool_registry = load_tool_registry()
     model_registry = load_model_registry()
+    vqa_runtime_settings = vqa_settings or VqaRuntimeSettings.from_env()
+
+    def model_readiness_probe(model_id: str, registration: object) -> bool:
+        if model_id != "smolvlm_256m_instruct_v1":
+            return False
+
+        checkpoint = (
+            vqa_runtime_settings.model_root
+            / "cache"
+            / ("models--" + registration.model_id.replace("/", "--"))
+            / "snapshots"
+            / registration.revision
+            / registration.checkpoint_file
+        )
+
+        if not checkpoint.is_file():
+            return False
+
+        try:
+            digest = hashlib.sha256()
+            with checkpoint.open("rb") as file_handle:
+                for block in iter(
+                    lambda: file_handle.read(1024 * 1024),
+                    b"",
+                ):
+                    digest.update(block)
+
+            return digest.hexdigest() == registration.checkpoint_sha256
+        except (OSError, ValueError):
+            return False
+
     runtime_capabilities = load_runtime_capabilities(
-        tool_registry, model_registry=model_registry
+        tool_registry,
+        model_registry=model_registry,
+        model_root=vqa_runtime_settings.model_root,
+        model_readiness_probe=model_readiness_probe,
     )
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.observation_repository.mark_running_jobs_interrupted(
@@ -132,8 +168,19 @@ def create_app(
     application.state.safety_limits = safety_limits
     application.state.visualization_settings = display_settings
     artifact_store = ArtifactStore(store.data_root)
+    # Create the application-level VQA service once and share it with the
+    # registered VQA adapter so the frozen checkpoint is loaded at most once.
+    single_image_vqa_service = SingleImageVqaService(
+        store,
+        settings=vqa_settings,
+        backend=vqa_backend,
+    )
     execution_engine = ExecutionEngine(
-        build_registered_adapters(tool_registry, artifact_store=artifact_store),
+        build_registered_adapters(
+            tool_registry,
+            artifact_store=artifact_store,
+            vqa_service=single_image_vqa_service,
+        ),
         artifact_store=artifact_store,
         tool_registry=tool_registry,
         timeout_seconds=float(os.environ.get("SATQUERY_TOOL_TIMEOUT_SECONDS", "300")),
@@ -153,11 +200,7 @@ def create_app(
         derivative_generator=VisualizationDerivativeGenerator(display_settings),
     )
     application.state.raster_tile_service = RasterTileService(store, display_settings)
-    application.state.single_image_vqa_service = SingleImageVqaService(
-        store,
-        settings=vqa_settings,
-        backend=vqa_backend,
-    )
+    application.state.single_image_vqa_service = single_image_vqa_service
     application.state.text_guided_grounding_service = TextGuidedGroundingService(
         store,
         settings=grounding_settings,

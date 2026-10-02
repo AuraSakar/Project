@@ -12,7 +12,7 @@ phase5_start:
   mode: RESTRICTED_CAPABILITY
   phase4_closeout_status: BLOCKED
   phase4_closeout_path: experiments/phase4_temporal_analytics/PHASE_4_CLOSEOUT.json
-  phase4_closeout_sha256: 26f31fa2a6007b1a93cdfbe5498d40de3f545f7bac904b934682a0747830f200
+  phase4_closeout_sha256: c44b020bdac407077c92feb3f3e0815d17b8c063fd61f3677266e31513f43484
   starting_git_sha: 5d2adc7a95fb3853788a905782a8e5f32b058031
   start_policy: >-
     Phase 5 may start once (1) a canonical Phase 4 closeout artifact exists,
@@ -104,6 +104,7 @@ capabilities:
   single_image_vqa:
     status: AVAILABLE_WITH_LIMITS
     source_phase: 2
+    tool_ids: [single_image_vqa_v1]
     model_ids: [smolvlm_256m_instruct_v1]
     preprocessing_profile: smolvlm_single_image_v1
     modality: optical RGB visualization
